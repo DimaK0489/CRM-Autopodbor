@@ -66,12 +66,20 @@ function formatDate(dateStr: string): string {
 function formatBudget(budget: number): string {
   return new Intl.NumberFormat("ru-RU", {
     style: "currency",
-    currency: "RUB",
+    currency: "USD",
     maximumFractionDigits: 0,
   }).format(budget);
 }
 
-function KanbanCard({ order, index }: { order: Order; index: number }) {
+function KanbanCard({
+  order,
+  index,
+  onSelect,
+}: {
+  order: Order;
+  index: number;
+  onSelect: (order: Order) => void;
+}) {
   return (
     <Draggable draggableId={order.id} index={index}>
       {(provided, snapshot) => (
@@ -79,7 +87,8 @@ function KanbanCard({ order, index }: { order: Order; index: number }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3 transition-all ${
+          onClick={() => onSelect(order)}
+          className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-3 transition-all cursor-pointer ${
             snapshot.isDragging
               ? "shadow-lg rotate-2 scale-105 ring-2 ring-indigo-400"
               : "hover:shadow-md hover:border-gray-300"
@@ -270,11 +279,159 @@ function AddOrderModal({
   );
 }
 
+function OrderDetailsModal({
+  order,
+  onClose,
+}: {
+  order: Order;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+              <User size={20} className="text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {order.clientName}
+              </h2>
+              <span
+                className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  statusColors[order.status]
+                }`}
+              >
+                {STATUS_LABELS[order.status]}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-5">
+          {/* Phone */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+              Телефон
+            </label>
+            <a
+              href={`tel:${order.clientPhone}`}
+              className="flex items-center gap-3 text-gray-900 hover:text-indigo-600 transition-colors group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
+                <Phone size={16} className="text-emerald-600" />
+              </div>
+              <span className="font-medium text-base">{order.clientPhone}</span>
+            </a>
+          </div>
+
+          {/* Budget */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+              Максимальный бюджет
+            </label>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                <Wallet size={16} className="text-amber-600" />
+              </div>
+              <span className="font-bold text-xl text-gray-900">
+                {formatBudget(order.budgetMax)}
+              </span>
+            </div>
+          </div>
+
+          {/* Requirements */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+              Требования к автоподбору
+            </label>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText size={16} className="text-blue-600" />
+                </div>
+                <div className="max-h-40 overflow-y-auto text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {order.requirements}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+              Статус заявки
+            </label>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${
+                  statusColors[order.status]
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-current" />
+                {STATUS_LABELS[order.status]}
+              </span>
+            </div>
+          </div>
+
+          {/* Created At */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+              Дата создания
+            </label>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center shrink-0">
+                <Clock size={16} className="text-slate-600" />
+              </div>
+              <span className="text-sm text-gray-700 font-medium">
+                {new Date(order.createdAt).toLocaleDateString("ru-RU", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            Закрыть
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function KanbanBoard() {
   const { data: orders = [], isLoading, isError } = useOrders();
   const updateStatus = useUpdateOrderStatus();
   const [modalOpen, setModalOpen] = useState(false);
   const [mobileColumn, setMobileColumn] = useState<OrderStatus>("NEW");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   function onDragEnd(result: DropResult) {
     const { source, destination, draggableId } = result;
@@ -395,6 +552,7 @@ export default function KanbanBoard() {
                               key={order.id}
                               order={order}
                               index={index}
+                              onSelect={setSelectedOrder}
                             />
                           ))}
                           {provided.placeholder}
@@ -410,6 +568,13 @@ export default function KanbanBoard() {
       </div>
 
       <AddOrderModal open={modalOpen} onClose={() => setModalOpen(false)} />
+
+      {selectedOrder && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
+      )}
     </div>
   );
 }
