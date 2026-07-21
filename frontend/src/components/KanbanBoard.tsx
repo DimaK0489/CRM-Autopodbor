@@ -292,9 +292,11 @@ function AddOrderModal({
 function OrderDetailsModal({
   order,
   onClose,
+  onUpdate,
 }: {
   order: Order;
   onClose: () => void;
+  onUpdate: (order: Order) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [clientName, setClientName] = useState(order.clientName);
@@ -326,7 +328,7 @@ function OrderDetailsModal({
     if (!clientName.trim() || !clientPhone.trim() || !budgetMax.trim()) return;
 
     try {
-      await updateOrder.mutateAsync({
+      const updated = await updateOrder.mutateAsync({
         id: order.id,
         data: {
           clientName: clientName.trim(),
@@ -335,6 +337,7 @@ function OrderDetailsModal({
           requirements: requirements.trim(),
         },
       });
+      onUpdate(updated);
       setEditing(false);
     } catch (err) {
       console.error("Error updating order:", err);
@@ -715,6 +718,7 @@ export default function KanbanBoard() {
         <OrderDetailsModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
+          onUpdate={setSelectedOrder}
         />
       )}
     </div>
