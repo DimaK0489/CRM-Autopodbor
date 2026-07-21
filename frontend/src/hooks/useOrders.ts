@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../api";
-import type { Order, OrderStatus } from "../types";
+import { api } from "../services/api";
+import type { Order, OrderStatus } from "../types/types";
 
 const ORDERS_KEY = ["orders"] as const;
 

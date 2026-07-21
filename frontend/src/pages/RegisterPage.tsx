@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "./useAuth";
-import { api } from "./api";
+import { useAuth } from "../hooks/useAuth";
+import { api } from "../services/api";
 
 interface RegisterPageProps {
   onSwitchToLogin: () => void;

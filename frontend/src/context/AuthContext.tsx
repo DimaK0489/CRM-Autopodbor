@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { isAuthenticated, setToken, clearToken } from "./api";
+import { isAuthenticated, setToken, clearToken } from "../services/api";
 import { AuthContext } from "./auth-context";
 
 export function AuthProvider({ children }: { children: ReactNode }) {

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./query-client";
-import { AuthProvider } from "./AuthContext";
-import { useAuth } from "./useAuth";
-import KanbanBoard from "./KanbanBoard";
-import LoginPage from "./LoginPage";
-import RegisterPage from "./RegisterPage";
+import { queryClient } from "./services/query-client";
+import { useAuth } from "./hooks/useAuth";
+import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage";
+import KanbanBoard from "./components/KanbanBoard";
+import { AuthProvider } from "./context/AuthContext";
 
 function AppContent() {
   const { isAuth, user, logout } = useAuth();

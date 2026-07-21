@@ -6,12 +6,12 @@ import {
   type DropResult,
 } from "@hello-pangea/dnd";
 import { Phone, Wallet, FileText, Clock, User, Plus, X } from "lucide-react";
-import type { Order, OrderStatus } from "./types";
+import type { Order, OrderStatus } from "../types/types";
 import {
   useOrders,
   useCreateOrder,
   useUpdateOrderStatus,
-} from "./hooks/useOrders";
+} from "../hooks/useOrders";
 
 const COLUMNS: { id: OrderStatus; title: string }[] = [
   { id: "NEW", title: "Новые" },
