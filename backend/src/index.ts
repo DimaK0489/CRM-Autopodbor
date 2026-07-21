@@ -10,7 +10,9 @@ const PORT = process.env.PORT || 3001;
 // CORS — разрешаем запросы с фронтенда
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: process.env.FRONTEND_URL
+      ? process.env.FRONTEND_URL.split(",").map((s) => s.trim())
+      : ["http://localhost:5173", "http://127.0.0.1:5173"],
     credentials: true,
   }),
 );

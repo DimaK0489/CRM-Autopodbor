@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: crm-autopodbor-backend
+    runtime: node
+    repo: https://github.com/DimaK0489/CRM-Autopodbor
+    branch: main
+    rootDir: backend
+    buildCommand: npm install && npm run build && npx prisma generate
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: FRONTEND_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
