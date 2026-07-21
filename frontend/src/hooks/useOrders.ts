@@ -56,3 +56,20 @@ export function useUpdateOrderStatus() {
     },
   });
 }
+
+export function useUpdateOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<Omit<Order, "id" | "createdAt" | "status">>;
+    }) => api.patch<Order>(`/orders/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ORDERS_KEY });
+    },
+  });
+}

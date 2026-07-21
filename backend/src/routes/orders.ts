@@ -50,16 +50,12 @@ router.post("/", async (req: AuthRequest, res: Response) => {
   }
 });
 
-// PATCH /api/orders/:id — обновить статус заявки (только свою)
+// PATCH /api/orders/:id — обновить заявку (только свою)
 router.patch("/:id", async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { status } = req.body;
-
-    if (!status) {
-      res.status(400).json({ error: "status is required" });
-      return;
-    }
+    const { clientName, clientPhone, budgetMax, requirements, status } =
+      req.body;
 
     // Проверяем, что заказ принадлежит пользователю
     const existing = await prisma.order.findFirst({
@@ -71,9 +67,22 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
       return;
     }
 
+    // Собираем только переданные поля для обновления
+    const data: Record<string, unknown> = {};
+    if (clientName !== undefined) data.clientName = clientName;
+    if (clientPhone !== undefined) data.clientPhone = clientPhone;
+    if (budgetMax !== undefined) data.budgetMax = budgetMax;
+    if (requirements !== undefined) data.requirements = requirements;
+    if (status !== undefined) data.status = status;
+
+    if (Object.keys(data).length === 0) {
+      res.status(400).json({ error: "No fields to update" });
+      return;
+    }
+
     const order = await prisma.order.update({
       where: { id },
-      data: { status },
+      data,
     });
 
     res.json(order);

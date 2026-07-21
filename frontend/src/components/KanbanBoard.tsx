@@ -5,12 +5,22 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import { Phone, Wallet, FileText, Clock, User, Plus, X } from "lucide-react";
+import {
+  Phone,
+  Wallet,
+  FileText,
+  Clock,
+  User,
+  Plus,
+  X,
+  Edit3,
+} from "lucide-react";
 import type { Order, OrderStatus } from "../types/types";
 import {
   useOrders,
   useCreateOrder,
   useUpdateOrderStatus,
+  useUpdateOrder,
 } from "../hooks/useOrders";
 
 const COLUMNS: { id: OrderStatus; title: string }[] = [
@@ -286,6 +296,51 @@ function OrderDetailsModal({
   order: Order;
   onClose: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [clientName, setClientName] = useState(order.clientName);
+  const [clientPhone, setClientPhone] = useState(order.clientPhone);
+  const [budgetMax, setBudgetMax] = useState(String(order.budgetMax));
+  const [requirements, setRequirements] = useState(order.requirements);
+
+  const updateOrder = useUpdateOrder();
+
+  // Reset form fields when order changes
+  if (!editing) {
+    if (clientName !== order.clientName) setClientName(order.clientName);
+    if (clientPhone !== order.clientPhone) setClientPhone(order.clientPhone);
+    if (budgetMax !== String(order.budgetMax))
+      setBudgetMax(String(order.budgetMax));
+    if (requirements !== order.requirements)
+      setRequirements(order.requirements);
+  }
+
+  function handleCancel() {
+    setClientName(order.clientName);
+    setClientPhone(order.clientPhone);
+    setBudgetMax(String(order.budgetMax));
+    setRequirements(order.requirements);
+    setEditing(false);
+  }
+
+  async function handleSave() {
+    if (!clientName.trim() || !clientPhone.trim() || !budgetMax.trim()) return;
+
+    try {
+      await updateOrder.mutateAsync({
+        id: order.id,
+        data: {
+          clientName: clientName.trim(),
+          clientPhone: clientPhone.trim(),
+          budgetMax: Number(budgetMax),
+          requirements: requirements.trim(),
+        },
+      });
+      setEditing(false);
+    } catch (err) {
+      console.error("Error updating order:", err);
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
@@ -313,31 +368,78 @@ function OrderDetailsModal({
               </span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-1">
+            {!editing && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                title="Редактировать"
+              >
+                <Edit3 size={18} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-5">
+          {/* Client Name */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+              Имя клиента
+            </label>
+            {editing ? (
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+              />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                  <User size={16} className="text-indigo-600" />
+                </div>
+                <span className="font-medium text-base text-gray-900">
+                  {order.clientName}
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Phone */}
           <div>
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
               Телефон
             </label>
-            <a
-              href={`tel:${order.clientPhone}`}
-              className="flex items-center gap-3 text-gray-900 hover:text-indigo-600 transition-colors group"
-            >
-              <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
-                <Phone size={16} className="text-emerald-600" />
-              </div>
-              <span className="font-medium text-base">{order.clientPhone}</span>
-            </a>
+            {editing ? (
+              <input
+                type="tel"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+              />
+            ) : (
+              <a
+                href={`tel:${order.clientPhone}`}
+                className="flex items-center gap-3 text-gray-900 hover:text-indigo-600 transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
+                  <Phone size={16} className="text-emerald-600" />
+                </div>
+                <span className="font-medium text-base">
+                  {order.clientPhone}
+                </span>
+              </a>
+            )}
           </div>
 
           {/* Budget */}
@@ -345,14 +447,24 @@ function OrderDetailsModal({
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
               Максимальный бюджет
             </label>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                <Wallet size={16} className="text-amber-600" />
+            {editing ? (
+              <input
+                type="number"
+                value={budgetMax}
+                onChange={(e) => setBudgetMax(e.target.value)}
+                min={0}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+              />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                  <Wallet size={16} className="text-amber-600" />
+                </div>
+                <span className="font-bold text-xl text-gray-900">
+                  {formatBudget(order.budgetMax)}
+                </span>
               </div>
-              <span className="font-bold text-xl text-gray-900">
-                {formatBudget(order.budgetMax)}
-              </span>
-            </div>
+            )}
           </div>
 
           {/* Requirements */}
@@ -360,16 +472,25 @@ function OrderDetailsModal({
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
               Требования к автоподбору
             </label>
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText size={16} className="text-blue-600" />
-                </div>
-                <div className="max-h-40 overflow-y-auto text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {order.requirements}
+            {editing ? (
+              <textarea
+                value={requirements}
+                onChange={(e) => setRequirements(e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition resize-none"
+              />
+            ) : (
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+                    <FileText size={16} className="text-blue-600" />
+                  </div>
+                  <div className="max-h-40 overflow-y-auto text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {order.requirements}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Status */}
@@ -413,13 +534,34 @@ function OrderDetailsModal({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
-          >
-            Закрыть
-          </button>
+          {editing ? (
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={updateOrder.isPending}
+                className="flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-60"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={updateOrder.isPending}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-60"
+              >
+                {updateOrder.isPending ? "Сохранение..." : "Сохранить"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
+            >
+              Закрыть
+            </button>
+          )}
         </div>
       </div>
     </div>
