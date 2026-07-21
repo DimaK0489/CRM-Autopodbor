@@ -5,7 +5,7 @@ services:
     repo: https://github.com/DimaK0489/CRM-Autopodbor
     branch: main
     rootDir: backend
-    buildCommand: npm install --include=dev && npm run build && npx prisma generate
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
