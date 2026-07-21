@@ -274,6 +274,7 @@ export default function KanbanBoard() {
   const { data: orders = [], isLoading, isError } = useOrders();
   const updateStatus = useUpdateOrderStatus();
   const [modalOpen, setModalOpen] = useState(false);
+  const [mobileColumn, setMobileColumn] = useState<OrderStatus>("NEW");
 
   function onDragEnd(result: DropResult) {
     const { source, destination, draggableId } = result;
@@ -297,15 +298,16 @@ export default function KanbanBoard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 pt-20">
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 pt-16 sm:pt-20">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex items-start justify-between">
+        {/* Header */}
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <User size={24} className="text-indigo-600" />
-              CRM Автоподбор
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <User size={20} className="text-indigo-600 shrink-0" />
+              <span>CRM Автоподбор</span>
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 hidden sm:block">
               Перетаскивайте карточки между колонками для изменения статуса
               заявки
             </p>
@@ -313,11 +315,33 @@ export default function KanbanBoard() {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm w-full sm:w-auto justify-center"
           >
             <Plus size={18} />
             Добавить заявку
           </button>
+        </div>
+
+        {/* Mobile column tabs */}
+        <div className="flex sm:hidden gap-1 mb-4 overflow-x-auto pb-1 scrollbar-hide">
+          {COLUMNS.map((column) => {
+            const isActive = mobileColumn === column.id;
+            const count = getColumnOrders(column.id).length;
+            return (
+              <button
+                key={column.id}
+                type="button"
+                onClick={() => setMobileColumn(column.id)}
+                className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {column.title} ({count})
+              </button>
+            );
+          })}
         </div>
 
         {isLoading ? (
@@ -330,13 +354,17 @@ export default function KanbanBoard() {
           </div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {COLUMNS.map((column) => {
                 const columnOrders = getColumnOrders(column.id);
+                // On mobile: only show the selected column
+                const isHidden = mobileColumn !== column.id;
                 return (
                   <div
                     key={column.id}
-                    className={`rounded-xl border-2 ${columnColors[column.id]} flex flex-col`}
+                    className={`rounded-xl border-2 ${columnColors[column.id]} flex flex-col ${
+                      isHidden ? "hidden sm:flex" : "flex"
+                    }`}
                   >
                     <div
                       className={`${columnHeaders[column.id]} text-white text-sm font-semibold px-4 py-2.5 rounded-t-xl flex items-center justify-between`}
