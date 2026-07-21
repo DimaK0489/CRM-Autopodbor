@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./services/query-client";
 import { useAuth } from "./hooks/useAuth";
@@ -21,47 +21,68 @@ function AppContent() {
   }
 
   return (
-    <div>
-      {/* Desktop header */}
-      <div className="fixed top-4 right-4 z-50 hidden sm:flex items-center gap-3">
-        <span className="text-sm text-gray-500">{user?.email}</span>
-        <button
-          type="button"
-          onClick={logout}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
-        >
-          Выйти
-        </button>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="fixed top-0 left-0 right-0 z-50 hidden sm:flex items-center justify-between bg-white border-b border-gray-200 px-6 py-4 shadow-sm h-16">
+        <span className="text-xl font-bold text-gray-900">CRM Автоподбор</span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-sm shadow-sm select-none">
+              {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+            </div>
+            <span className="text-sm text-gray-600 font-medium">
+              {user?.email}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={logout}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm"
+          >
+            Выйти
+          </button>
+        </div>
       </div>
 
-      {/* Mobile header */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex sm:hidden items-center justify-between bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
+      <div className="fixed top-0 left-0 right-0 z-50 flex sm:hidden items-center justify-between bg-white border-b border-gray-200 px-4 py-3 shadow-sm h-12">
         <span className="text-sm font-semibold text-gray-900">
           CRM Автоподбор
         </span>
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="focus:outline-none transition-transform active:scale-95"
         >
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          {mobileMenuOpen ? (
+            <div className="p-1 rounded-lg text-gray-500 hover:bg-gray-100">
+              <X size={20} />
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-xs shadow-sm border border-blue-600">
+              {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+            </div>
+          )}
         </button>
       </div>
 
-      {/* Mobile dropdown menu */}
       {mobileMenuOpen && (
         <div className="fixed top-12 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 shadow-md sm:hidden">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500 truncate">
-              {user?.email}
-            </span>
+            <div className="flex items-center gap-2 truncate max-w-[70%]">
+              <div className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center font-semibold text-xs flex-shrink-0">
+                {user?.email ? user.email.charAt(0).toUpperCase() : "U"}
+              </div>
+              <span className="text-sm text-gray-500 truncate">
+                {user?.email}
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => {
                 logout();
                 setMobileMenuOpen(false);
               }}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors flex-shrink-0"
             >
               Выйти
             </button>
@@ -69,7 +90,9 @@ function AppContent() {
         </div>
       )}
 
-      <KanbanBoard />
+      <main className="flex-1 pt-20 sm:pt-24 px-4 sm:px-6">
+        <KanbanBoard />
+      </main>
     </div>
   );
 }
