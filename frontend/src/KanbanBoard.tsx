@@ -1,5 +1,4 @@
-import { useState, useEffect, type FormEvent } from "react";
-import { api } from "./api";
+import { useState, type FormEvent } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -8,6 +7,11 @@ import {
 } from "@hello-pangea/dnd";
 import { Phone, Wallet, FileText, Clock, User, Plus, X } from "lucide-react";
 import type { Order, OrderStatus } from "./types";
+import {
+  useOrders,
+  useCreateOrder,
+  useUpdateOrderStatus,
+} from "./hooks/useOrders";
 
 const COLUMNS: { id: OrderStatus; title: string }[] = [
   { id: "NEW", title: "Новые" },
@@ -124,17 +128,16 @@ function KanbanCard({ order, index }: { order: Order; index: number }) {
 function AddOrderModal({
   open,
   onClose,
-  onAdd,
 }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (order: Order) => void;
 }) {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
   const [requirements, setRequirements] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+
+  const createOrder = useCreateOrder();
 
   if (!open) return null;
 
@@ -150,16 +153,13 @@ function AddOrderModal({
       return;
     }
 
-    setSubmitting(true);
-
     try {
-      const newOrder = await api.post<Order>("/orders", {
+      await createOrder.mutateAsync({
         clientName: clientName.trim(),
         clientPhone: clientPhone.trim(),
         budgetMax: Number(budgetMax),
         requirements: requirements.trim(),
       });
-      onAdd(newOrder);
 
       setClientName("");
       setClientPhone("");
@@ -168,8 +168,6 @@ function AddOrderModal({
       onClose();
     } catch (err) {
       console.error("Error creating order:", err);
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -260,10 +258,10 @@ function AddOrderModal({
             </button>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={createOrder.isPending}
               className="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-60"
             >
-              {submitting ? "Сохранение..." : "Добавить заявку"}
+              {createOrder.isPending ? "Сохранение..." : "Добавить заявку"}
             </button>
           </div>
         </form>
@@ -273,30 +271,11 @@ function AddOrderModal({
 }
 
 export default function KanbanBoard() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: orders = [], isLoading, isError } = useOrders();
+  const updateStatus = useUpdateOrderStatus();
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchOrders() {
-      try {
-        const data = await api.get<Order[]>("/orders");
-        setOrders(data);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchOrders();
-  }, []);
-
-  function handleAddOrder(newOrder: Order) {
-    setOrders((prev) => [...prev, newOrder]);
-  }
-
-  async function onDragEnd(result: DropResult) {
+  function onDragEnd(result: DropResult) {
     const { source, destination, draggableId } = result;
 
     if (!destination) return;
@@ -310,53 +289,7 @@ export default function KanbanBoard() {
 
     const newStatus = destination.droppableId as OrderStatus;
 
-    // Оптимистично обновляем UI
-    setOrders((prev) => {
-      const newOrders = [...prev];
-      const orderIndex = newOrders.findIndex((o) => o.id === draggableId);
-      if (orderIndex === -1) return prev;
-
-      const movedOrder = { ...newOrders[orderIndex] };
-      movedOrder.status = newStatus;
-
-      newOrders.splice(orderIndex, 1);
-
-      const destColumnOrders = prev.filter((o) => o.status === newStatus);
-
-      // Находим индекс вставки в целевой колонке
-      let insertIdx = -1;
-      if (destColumnOrders.length > 0) {
-        const targetId =
-          destColumnOrders[
-            Math.min(destination.index, destColumnOrders.length - 1)
-          ]?.id;
-        if (targetId) {
-          insertIdx = newOrders.findIndex((o) => o.id === targetId);
-        }
-      }
-
-      if (insertIdx === -1) {
-        newOrders.push(movedOrder);
-      } else {
-        newOrders.splice(insertIdx, 0, movedOrder);
-      }
-
-      return newOrders;
-    });
-
-    // Отправляем PATCH на сервер
-    try {
-      await api.patch(`/orders/${draggableId}`, { status: newStatus });
-    } catch (err) {
-      console.error("Error updating order status:", err);
-      // В случае ошибки перезагружаем данные с сервера
-      try {
-        const data = await api.get<Order[]>("/orders");
-        setOrders(data);
-      } catch {
-        // игнорируем ошибку перезагрузки
-      }
-    }
+    updateStatus.mutate({ id: draggableId, status: newStatus });
   }
 
   function getColumnOrders(status: OrderStatus) {
@@ -387,9 +320,13 @@ export default function KanbanBoard() {
           </button>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="text-gray-400 text-lg">Загрузка заявок...</div>
+          </div>
+        ) : isError ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-red-400 text-lg">Ошибка загрузки заявок</div>
           </div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
@@ -444,11 +381,7 @@ export default function KanbanBoard() {
         )}
       </div>
 
-      <AddOrderModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onAdd={handleAddOrder}
-      />
+      <AddOrderModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }

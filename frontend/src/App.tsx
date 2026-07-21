@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./query-client";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
 import KanbanBoard from "./KanbanBoard";
@@ -35,9 +37,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
