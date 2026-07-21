@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./useAuth";
 import { api } from "./api";
 
 interface LoginPageProps {

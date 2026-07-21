@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { AuthProvider, useAuth } from "./AuthContext";
+import { AuthProvider } from "./AuthContext";
+import { useAuth } from "./useAuth";
 import KanbanBoard from "./KanbanBoard";
 import LoginPage from "./LoginPage";
 import RegisterPage from "./RegisterPage";
