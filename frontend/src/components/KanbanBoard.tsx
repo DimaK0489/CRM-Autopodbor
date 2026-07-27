@@ -600,7 +600,7 @@ function OrderDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+        <div className="px-6 pb-5 pt-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
           {editing ? (
             <div className="flex gap-3">
               <button
@@ -653,7 +653,7 @@ function OrderDetailsModal({
                   <button
                     type="button"
                     onClick={handleDelete}
-                    className="flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors"
                   >
                     <Trash2 size={16} />
                     Удалить
