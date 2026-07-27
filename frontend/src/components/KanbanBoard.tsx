@@ -981,7 +981,7 @@ export default function KanbanBoard() {
         </div>
 
         {/* Mobile column tabs */}
-        <div className="flex sm:hidden gap-1 mb-4 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex sm:hidden items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none px-0 py-1 mb-2">
           {COLUMNS.map((column) => {
             const isActive = mobileColumn === column.id;
             const count = getColumnOrders(column.id).length;
@@ -990,7 +990,7 @@ export default function KanbanBoard() {
                 key={column.id}
                 type="button"
                 onClick={() => setMobileColumn(column.id)}
-                className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                   isActive
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
@@ -1012,7 +1012,7 @@ export default function KanbanBoard() {
           </div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:mt-0 mt-6">
               {COLUMNS.map((column) => {
                 const columnOrders = getColumnOrders(column.id);
                 // On mobile: only show the selected column
