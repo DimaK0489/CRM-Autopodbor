@@ -24,7 +24,15 @@ router.get("/", async (req: AuthRequest, res: Response) => {
 // POST /api/orders — создать новую заявку (привязанную к пользователю)
 router.post("/", async (req: AuthRequest, res: Response) => {
   try {
-    const { clientName, clientPhone, budgetMax, requirements } = req.body;
+    const {
+      clientName,
+      clientPhone,
+      budgetMax,
+      requirements,
+      carModel,
+      carYear,
+      carMileage,
+    } = req.body;
 
     if (!clientName || !clientPhone) {
       res
@@ -39,6 +47,9 @@ router.post("/", async (req: AuthRequest, res: Response) => {
         clientPhone,
         budgetMax: budgetMax ?? 0,
         requirements: requirements ?? "",
+        carModel: carModel ?? null,
+        carYear: carYear ?? null,
+        carMileage: carMileage ?? null,
         userId: req.user!.id,
       },
     });
@@ -54,8 +65,16 @@ router.post("/", async (req: AuthRequest, res: Response) => {
 router.patch("/:id", async (req: AuthRequest, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { clientName, clientPhone, budgetMax, requirements, status } =
-      req.body;
+    const {
+      clientName,
+      clientPhone,
+      budgetMax,
+      requirements,
+      status,
+      carModel,
+      carYear,
+      carMileage,
+    } = req.body;
 
     // Проверяем, что заказ принадлежит пользователю
     const existing = await prisma.order.findFirst({
@@ -74,6 +93,9 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
     if (budgetMax !== undefined) data.budgetMax = budgetMax;
     if (requirements !== undefined) data.requirements = requirements;
     if (status !== undefined) data.status = status;
+    if (carModel !== undefined) data.carModel = carModel;
+    if (carYear !== undefined) data.carYear = carYear;
+    if (carMileage !== undefined) data.carMileage = carMileage;
 
     if (Object.keys(data).length === 0) {
       res.status(400).json({ error: "No fields to update" });
