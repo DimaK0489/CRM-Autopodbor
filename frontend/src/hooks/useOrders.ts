@@ -73,3 +73,14 @@ export function useUpdateOrder() {
     },
   });
 }
+
+export function useDeleteOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.delete<Order>(`/orders/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ORDERS_KEY });
+    },
+  });
+}

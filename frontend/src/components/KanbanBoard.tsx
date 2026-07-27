@@ -14,6 +14,7 @@ import {
   Plus,
   X,
   Edit3,
+  Trash2,
 } from "lucide-react";
 import type { Order, OrderStatus } from "../types/types";
 import {
@@ -21,6 +22,7 @@ import {
   useCreateOrder,
   useUpdateOrderStatus,
   useUpdateOrder,
+  useDeleteOrder,
 } from "../hooks/useOrders";
 
 const COLUMNS: { id: OrderStatus; title: string }[] = [
@@ -304,9 +306,11 @@ function OrderDetailsModal({
   const [budgetMax, setBudgetMax] = useState(String(order.budgetMax));
   const [requirements, setRequirements] = useState(order.requirements);
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
   const updateOrder = useUpdateOrder();
   const updateStatus = useUpdateOrderStatus();
-
+  const deleteOrder = useDeleteOrder();
   // Reset form fields when order changes
   if (!editing) {
     if (clientName !== order.clientName) setClientName(order.clientName);
@@ -356,6 +360,18 @@ function OrderDetailsModal({
     );
   }
 
+  function handleDelete() {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    deleteOrder.mutate(order.id, {
+      onSuccess: () => {
+        setConfirmDelete(false);
+        onClose();
+      },
+    });
+  }
   const availableStatuses = COLUMNS.filter((c) => c.id !== order.status);
 
   return (
@@ -605,13 +621,46 @@ function OrderDetailsModal({
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
-            >
-              Закрыть
-            </button>
+            <div className="flex gap-3">
+              {confirmDelete ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleteOrder.isPending}
+                    className="flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-60"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleteOrder.isPending}
+                    className="flex-1 py-2.5 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-60"
+                  >
+                    {deleteOrder.isPending ? "Удаление..." : "Подтвердить"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                  >
+                    Закрыть
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                    Удалить
+                  </button>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>

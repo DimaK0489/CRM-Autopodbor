@@ -92,4 +92,27 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// DELETE /api/orders/:id — удалить заявку (только свою)
+router.delete("/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+
+    const existing = await prisma.order.findFirst({
+      where: { id, userId: req.user!.id },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+
+    await prisma.order.delete({ where: { id } });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res.status(500).json({ error: "Failed to delete order" });
+  }
+});
+
 export default router;
