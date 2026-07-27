@@ -18,6 +18,7 @@ import {
   Car,
   Gauge,
   Calendar,
+  Search,
 } from "lucide-react";
 import type { Order, OrderStatus } from "../types/types";
 import {
@@ -872,6 +873,8 @@ export default function KanbanBoard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [mobileColumn, setMobileColumn] = useState<OrderStatus>("NEW");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [maxBudgetFilter, setMaxBudgetFilter] = useState<number | "">("");
 
   function onDragEnd(result: DropResult) {
     const { source, destination, draggableId } = result;
@@ -891,8 +894,25 @@ export default function KanbanBoard() {
   }
 
   function getColumnOrders(status: OrderStatus) {
-    return orders.filter((o) => o.status === status);
+    return filteredOrders.filter((o) => o.status === status);
   }
+
+  const filteredOrders = orders.filter((o) => {
+    // Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        o.clientName.toLowerCase().includes(q) ||
+        o.requirements.toLowerCase().includes(q) ||
+        (o.carModel && o.carModel.toLowerCase().includes(q));
+      if (!matchesSearch) return false;
+    }
+    // Budget filter
+    if (maxBudgetFilter !== "") {
+      if (o.budgetMax > maxBudgetFilter) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 pt-16 sm:pt-20">
@@ -917,6 +937,47 @@ export default function KanbanBoard() {
             <Plus size={18} />
             Добавить заявку
           </button>
+        </div>
+
+        {/* Filter bar */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Поиск по имени клиента или модели авто..."
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-300 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+            />
+          </div>
+          <input
+            type="number"
+            value={maxBudgetFilter}
+            onChange={(e) =>
+              setMaxBudgetFilter(
+                e.target.value === "" ? "" : Number(e.target.value),
+              )
+            }
+            placeholder="Максимальный бюджет до..."
+            min={0}
+            className="w-full sm:w-56 pl-3 pr-3 py-2 text-sm rounded-lg border border-gray-300 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+          />
+          {(searchQuery || maxBudgetFilter !== "") && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setMaxBudgetFilter("");
+              }}
+              className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors shrink-0"
+            >
+              Сбросить
+            </button>
+          )}
         </div>
 
         {/* Mobile column tabs */}
