@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import { queryClient } from "./services/query-client";
 import { useAuth } from "./hooks/useAuth";
 import RegisterPage from "./pages/RegisterPage";
@@ -93,6 +94,8 @@ function AppContent() {
       <main className="flex-1 pt-20 sm:pt-24 px-4 sm:px-6">
         <KanbanBoard />
       </main>
+
+      <Toaster position="top-right" richColors closeButton />
     </div>
   );
 }
