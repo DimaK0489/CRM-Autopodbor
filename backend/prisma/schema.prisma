@@ -24,6 +24,9 @@ model Order {
   budgetMax    Float
   requirements String
   status       String   @default("NEW")
+  carModel     String?
+  carYear      Int?
+  carMileage   Int?
   createdAt    DateTime @default(now())
   userId       String
   user         User     @relation(fields: [userId], references: [id])

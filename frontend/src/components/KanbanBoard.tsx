@@ -15,6 +15,9 @@ import {
   X,
   Edit3,
   Trash2,
+  Car,
+  Gauge,
+  Calendar,
 } from "lucide-react";
 import type { Order, OrderStatus } from "../types/types";
 import {
@@ -83,6 +86,10 @@ function formatBudget(budget: number): string {
   }).format(budget);
 }
 
+function formatMileage(km: number): string {
+  return new Intl.NumberFormat("ru-RU").format(km) + " км";
+}
+
 function KanbanCard({
   order,
   index,
@@ -131,6 +138,29 @@ function KanbanCard({
               <Wallet size={12} className="shrink-0 text-gray-400" />
               <span>{formatBudget(order.budgetMax)}</span>
             </div>
+
+            {/* Car info */}
+            {order.carModel && (
+              <div className="flex items-center gap-1.5">
+                <Car size={12} className="shrink-0 text-gray-400" />
+                <span className="font-semibold text-gray-700">
+                  {order.carModel}
+                </span>
+              </div>
+            )}
+            {order.carYear && (
+              <div className="flex items-center gap-1.5">
+                <Calendar size={12} className="shrink-0 text-gray-400" />
+                <span>{order.carYear} г.</span>
+              </div>
+            )}
+            {order.carMileage !== undefined && order.carMileage !== null && (
+              <div className="flex items-center gap-1.5">
+                <Gauge size={12} className="shrink-0 text-gray-400" />
+                <span>{formatMileage(order.carMileage)}</span>
+              </div>
+            )}
+
             <div className="flex items-start gap-1.5">
               <FileText size={12} className="shrink-0 text-gray-400 mt-0.5" />
               <span className="line-clamp-2">{order.requirements}</span>
@@ -157,6 +187,9 @@ function AddOrderModal({
   const [clientPhone, setClientPhone] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
   const [requirements, setRequirements] = useState("");
+  const [carModel, setCarModel] = useState("");
+  const [carYear, setCarYear] = useState("");
+  const [carMileage, setCarMileage] = useState("");
 
   const createOrder = useCreateOrder();
 
@@ -180,12 +213,18 @@ function AddOrderModal({
         clientPhone: clientPhone.trim(),
         budgetMax: Number(budgetMax),
         requirements: requirements.trim(),
+        carModel: carModel.trim() || undefined,
+        carYear: carYear ? Number(carYear) : undefined,
+        carMileage: carMileage ? Number(carMileage) : undefined,
       });
 
       setClientName("");
       setClientPhone("");
       setBudgetMax("");
       setRequirements("");
+      setCarModel("");
+      setCarYear("");
+      setCarMileage("");
       onClose();
     } catch (err) {
       console.error("Error creating order:", err);
@@ -236,6 +275,50 @@ function AddOrderModal({
               onChange={(e) => setClientPhone(e.target.value)}
               placeholder="+375(29)123-45-67"
               required
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+            />
+          </div>
+
+          {/* Car info */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Марка / Модель
+              </label>
+              <input
+                type="text"
+                value={carModel}
+                onChange={(e) => setCarModel(e.target.value)}
+                placeholder="Toyota Camry"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Год
+              </label>
+              <input
+                type="number"
+                value={carYear}
+                onChange={(e) => setCarYear(e.target.value)}
+                placeholder="2020"
+                min={1900}
+                max={2030}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Пробег (км)
+            </label>
+            <input
+              type="number"
+              value={carMileage}
+              onChange={(e) => setCarMileage(e.target.value)}
+              placeholder="50000"
+              min={0}
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
             />
           </div>
@@ -305,12 +388,22 @@ function OrderDetailsModal({
   const [clientPhone, setClientPhone] = useState(order.clientPhone);
   const [budgetMax, setBudgetMax] = useState(String(order.budgetMax));
   const [requirements, setRequirements] = useState(order.requirements);
+  const [carModel, setCarModel] = useState(order.carModel ?? "");
+  const [carYear, setCarYear] = useState(
+    order.carYear ? String(order.carYear) : "",
+  );
+  const [carMileage, setCarMileage] = useState(
+    order.carMileage !== null && order.carMileage !== undefined
+      ? String(order.carMileage)
+      : "",
+  );
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const updateOrder = useUpdateOrder();
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
+
   // Reset form fields when order changes
   if (!editing) {
     if (clientName !== order.clientName) setClientName(order.clientName);
@@ -319,6 +412,20 @@ function OrderDetailsModal({
       setBudgetMax(String(order.budgetMax));
     if (requirements !== order.requirements)
       setRequirements(order.requirements);
+    if (carModel !== (order.carModel ?? "")) setCarModel(order.carModel ?? "");
+    if (carYear !== (order.carYear ? String(order.carYear) : ""))
+      setCarYear(order.carYear ? String(order.carYear) : "");
+    if (
+      carMileage !==
+      (order.carMileage !== null && order.carMileage !== undefined
+        ? String(order.carMileage)
+        : "")
+    )
+      setCarMileage(
+        order.carMileage !== null && order.carMileage !== undefined
+          ? String(order.carMileage)
+          : "",
+      );
   }
 
   function handleCancel() {
@@ -326,6 +433,13 @@ function OrderDetailsModal({
     setClientPhone(order.clientPhone);
     setBudgetMax(String(order.budgetMax));
     setRequirements(order.requirements);
+    setCarModel(order.carModel ?? "");
+    setCarYear(order.carYear ? String(order.carYear) : "");
+    setCarMileage(
+      order.carMileage !== null && order.carMileage !== undefined
+        ? String(order.carMileage)
+        : "",
+    );
     setEditing(false);
   }
 
@@ -340,6 +454,9 @@ function OrderDetailsModal({
           clientPhone: clientPhone.trim(),
           budgetMax: Number(budgetMax),
           requirements: requirements.trim(),
+          carModel: carModel.trim() || null,
+          carYear: carYear ? Number(carYear) : null,
+          carMileage: carMileage ? Number(carMileage) : null,
         },
       });
       onUpdate(updated);
@@ -372,6 +489,7 @@ function OrderDetailsModal({
       },
     });
   }
+
   const availableStatuses = COLUMNS.filter((c) => c.id !== order.status);
 
   return (
@@ -473,6 +591,86 @@ function OrderDetailsModal({
                 </span>
               </a>
             )}
+          </div>
+
+          {/* Car info */}
+          <div>
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+              Марка / Модель
+            </label>
+            {editing ? (
+              <input
+                type="text"
+                value={carModel}
+                onChange={(e) => setCarModel(e.target.value)}
+                placeholder="Toyota Camry"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+              />
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-cyan-50 flex items-center justify-center shrink-0">
+                  <Car size={16} className="text-cyan-600" />
+                </div>
+                <span className="font-semibold text-base text-gray-900">
+                  {order.carModel || "—"}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+                Год выпуска
+              </label>
+              {editing ? (
+                <input
+                  type="number"
+                  value={carYear}
+                  onChange={(e) => setCarYear(e.target.value)}
+                  min={1900}
+                  max={2030}
+                  placeholder="2020"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
+                    <Calendar size={16} className="text-rose-600" />
+                  </div>
+                  <span className="font-medium text-base text-gray-900">
+                    {order.carYear ? `${order.carYear} г.` : "—"}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 block">
+                Пробег
+              </label>
+              {editing ? (
+                <input
+                  type="number"
+                  value={carMileage}
+                  onChange={(e) => setCarMileage(e.target.value)}
+                  min={0}
+                  placeholder="50000"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
+                />
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                    <Gauge size={16} className="text-orange-600" />
+                  </div>
+                  <span className="font-medium text-base text-gray-900">
+                    {order.carMileage !== null && order.carMileage !== undefined
+                      ? formatMileage(order.carMileage)
+                      : "—"}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Budget */}

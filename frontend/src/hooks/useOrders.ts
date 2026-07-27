@@ -20,6 +20,9 @@ export function useCreateOrder() {
       clientPhone: string;
       budgetMax: number;
       requirements: string;
+      carModel?: string;
+      carYear?: number;
+      carMileage?: number;
     }) => api.post<Order>("/orders", data),
     onSuccess: (newOrder) => {
       queryClient.setQueryData<Order[]>(ORDERS_KEY, (old) =>
