@@ -2,13 +2,12 @@ import { useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { useCreateOrder } from "../hooks/useOrders";
 
-export default function AddOrderModal({
-  open,
-  onClose,
-}: {
+export interface Props {
   open: boolean;
   onClose: () => void;
-}) {
+}
+
+export default function AddOrderModal({ open, onClose }: Props) {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [budgetMax, setBudgetMax] = useState("");

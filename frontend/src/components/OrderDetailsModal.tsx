@@ -27,6 +27,12 @@ import {
   formatMileage,
 } from "../common/kanban-constants";
 
+interface Props {
+  order: Order;
+  onClose: () => void;
+  onUpdate: (order: Order) => void;
+}
+
 function formatDateFull(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("ru-RU", {
     day: "numeric",
@@ -37,15 +43,7 @@ function formatDateFull(dateStr: string): string {
   });
 }
 
-export default function OrderDetailsModal({
-  order,
-  onClose,
-  onUpdate,
-}: {
-  order: Order;
-  onClose: () => void;
-  onUpdate: (order: Order) => void;
-}) {
+export default function OrderDetailsModal({ order, onClose, onUpdate }: Props) {
   const [editing, setEditing] = useState(false);
   const [clientName, setClientName] = useState(order.clientName);
   const [clientPhone, setClientPhone] = useState(order.clientPhone);

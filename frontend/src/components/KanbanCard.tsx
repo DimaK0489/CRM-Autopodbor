@@ -33,15 +33,13 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function KanbanCard({
-  order,
-  index,
-  onSelect,
-}: {
+interface Props {
   order: Order;
   index: number;
   onSelect: (order: Order) => void;
-}) {
+}
+
+export default function KanbanCard({ order, index, onSelect }: Props) {
   return (
     <Draggable draggableId={order.id} index={index}>
       {(provided, snapshot) => (
