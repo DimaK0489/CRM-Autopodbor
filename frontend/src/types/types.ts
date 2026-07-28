@@ -5,6 +5,20 @@ export type OrderStatus =
   | "DEAL"
   | "CLOSED";
 
+export type InspectionStatus = "RECOMMENDED" | "REJECTED" | "PENDING";
+
+export interface CarInspection {
+  id: string;
+  carModel: string;
+  year: number;
+  price: number;
+  link?: string | null;
+  report: string;
+  status: InspectionStatus;
+  createdAt: string;
+  orderId: string;
+}
+
 export interface Order {
   id: string;
   clientName: string;
@@ -16,4 +30,5 @@ export interface Order {
   carYear?: number | null;
   carMileage?: number | null;
   createdAt: string;
+  inspections?: CarInspection[];
 }

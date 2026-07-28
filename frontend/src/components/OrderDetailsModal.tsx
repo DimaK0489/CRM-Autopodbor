@@ -11,12 +11,24 @@ import {
   Car,
   Gauge,
   Calendar,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  ClipboardCheck,
 } from "lucide-react";
-import type { Order, OrderStatus } from "../types/types";
+import type {
+  Order,
+  OrderStatus,
+  CarInspection,
+  InspectionStatus,
+} from "../types/types";
 import {
+  useOrders,
   useUpdateOrderStatus,
   useUpdateOrder,
   useDeleteOrder,
+  useCreateInspection,
 } from "../hooks/useOrders";
 import {
   COLUMNS,
@@ -43,7 +55,14 @@ function formatDateFull(dateStr: string): string {
   });
 }
 
-export default function OrderDetailsModal({ order, onClose, onUpdate }: Props) {
+export default function OrderDetailsModal({
+  order: propOrder,
+  onClose,
+  onUpdate,
+}: Props) {
+  // Get fresh data from cache so inspections show up immediately
+  const { data: orders } = useOrders();
+  const order = orders?.find((o) => o.id === propOrder.id) ?? propOrder;
   const [editing, setEditing] = useState(false);
   const [clientName, setClientName] = useState(order.clientName);
   const [clientPhone, setClientPhone] = useState(order.clientPhone);
@@ -63,6 +82,7 @@ export default function OrderDetailsModal({ order, onClose, onUpdate }: Props) {
   const updateOrder = useUpdateOrder();
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
+  const createInspection = useCreateInspection();
 
   // Reset form fields when order changes
   if (!editing) {
@@ -149,6 +169,69 @@ export default function OrderDetailsModal({ order, onClose, onUpdate }: Props) {
   }
 
   const availableStatuses = COLUMNS.filter((c) => c.id !== order.status);
+
+  // Inspection form state
+  const [showInspectionForm, setShowInspectionForm] = useState(false);
+  const [expandedInspection, setExpandedInspection] = useState<string | null>(
+    null,
+  );
+  const [insCarModel, setInsCarModel] = useState("");
+  const [insYear, setInsYear] = useState("");
+  const [insPrice, setInsPrice] = useState("");
+  const [insLink, setInsLink] = useState("");
+  const [insReport, setInsReport] = useState("");
+  const [insStatus, setInsStatus] = useState<InspectionStatus>("PENDING");
+
+  function resetInspectionForm() {
+    setInsCarModel("");
+    setInsYear("");
+    setInsPrice("");
+    setInsLink("");
+    setInsReport("");
+    setInsStatus("PENDING");
+  }
+
+  async function handleAddInspection() {
+    if (!insCarModel.trim() || !insYear || !insPrice || !insReport.trim())
+      return;
+
+    await createInspection.mutateAsync({
+      orderId: order.id,
+      data: {
+        carModel: insCarModel.trim(),
+        year: Number(insYear),
+        price: Number(insPrice),
+        link: insLink.trim() || undefined,
+        report: insReport.trim(),
+        status: insStatus,
+      },
+    });
+
+    resetInspectionForm();
+    setShowInspectionForm(false);
+  }
+
+  const inspections: CarInspection[] = order.inspections ?? [];
+
+  function formatInspectionPrice(price: number): string {
+    return new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(price);
+  }
+
+  const inspectionStatusLabel: Record<InspectionStatus, string> = {
+    RECOMMENDED: "Рекомендовано",
+    REJECTED: "Отклонено",
+    PENDING: "Ожидает",
+  };
+
+  const inspectionStatusColor: Record<InspectionStatus, string> = {
+    RECOMMENDED: "bg-emerald-100 text-emerald-800",
+    REJECTED: "bg-red-100 text-red-800",
+    PENDING: "bg-amber-100 text-amber-800",
+  };
 
   return (
     <div
@@ -418,6 +501,211 @@ export default function OrderDetailsModal({ order, onClose, onUpdate }: Props) {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Inspections */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                История осмотров
+              </label>
+              {!editing && (
+                <button
+                  type="button"
+                  onClick={() => setShowInspectionForm(!showInspectionForm)}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                >
+                  <Plus size={14} />
+                  {showInspectionForm ? "Отмена" : "Добавить осмотр"}
+                </button>
+              )}
+            </div>
+
+            {/* Add inspection form */}
+            {showInspectionForm && !editing && (
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-3 space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase mb-1 block">
+                      Модель
+                    </label>
+                    <input
+                      type="text"
+                      value={insCarModel}
+                      onChange={(e) => setInsCarModel(e.target.value)}
+                      placeholder="Toyota Camry"
+                      className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase mb-1 block">
+                      Год
+                    </label>
+                    <input
+                      type="number"
+                      value={insYear}
+                      onChange={(e) => setInsYear(e.target.value)}
+                      placeholder="2020"
+                      min={1900}
+                      max={2030}
+                      className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-400 uppercase mb-1 block">
+                      Цена
+                    </label>
+                    <input
+                      type="number"
+                      value={insPrice}
+                      onChange={(e) => setInsPrice(e.target.value)}
+                      placeholder="25000"
+                      min={0}
+                      className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase mb-1 block">
+                    Ссылка (av.by / encar.com)
+                  </label>
+                  <input
+                    type="text"
+                    value={insLink}
+                    onChange={(e) => setInsLink(e.target.value)}
+                    placeholder="https://encar.com/..."
+                    className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-semibold text-gray-400 uppercase mb-1 block">
+                    Результат осмотра
+                  </label>
+                  <textarea
+                    value={insReport}
+                    onChange={(e) => setInsReport(e.target.value)}
+                    rows={3}
+                    placeholder="Комментарий подборщика..."
+                    className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold text-gray-400 uppercase">
+                      Статус:
+                    </span>
+                    {(
+                      [
+                        "RECOMMENDED",
+                        "REJECTED",
+                        "PENDING",
+                      ] as InspectionStatus[]
+                    ).map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setInsStatus(s)}
+                        className={`px-2.5 py-1 text-[10px] font-medium rounded-full border transition-colors ${
+                          insStatus === s
+                            ? inspectionStatusColor[s]
+                            : "border-gray-200 text-gray-500 hover:bg-gray-100"
+                        }`}
+                      >
+                        {inspectionStatusLabel[s]}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddInspection}
+                    disabled={createInspection.isPending}
+                    className="px-4 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                  >
+                    {createInspection.isPending ? "Сохранение..." : "Добавить"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Inspection cards */}
+            {inspections.length === 0 ? (
+              <p className="text-gray-400 text-xs py-3 text-center bg-gray-50 rounded-xl border border-gray-100">
+                Осмотры ещё не добавлялись
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {inspections.map((ins) => {
+                  const isExpanded = expandedInspection === ins.id;
+                  return (
+                    <div
+                      key={ins.id}
+                      className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedInspection(isExpanded ? null : ins.id)
+                        }
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 transition-colors text-left"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center shrink-0">
+                            <ClipboardCheck
+                              size={14}
+                              className="text-cyan-600"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {ins.carModel}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {ins.year} г. · {formatInspectionPrice(ins.price)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span
+                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                              inspectionStatusColor[ins.status]
+                            }`}
+                          >
+                            {inspectionStatusLabel[ins.status]}
+                          </span>
+                          {isExpanded ? (
+                            <ChevronUp size={16} className="text-gray-400" />
+                          ) : (
+                            <ChevronDown size={16} className="text-gray-400" />
+                          )}
+                        </div>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="px-4 pb-4 pt-0 border-t border-gray-100">
+                          <div className="mt-3 text-xs text-gray-700 leading-relaxed whitespace-pre-wrap bg-white rounded-lg p-3 border border-gray-100">
+                            {ins.report || "Нет комментария"}
+                          </div>
+                          {ins.link && (
+                            <a
+                              href={ins.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
+                            >
+                              <ExternalLink size={12} />
+                              Смотреть объявление
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Created At */}

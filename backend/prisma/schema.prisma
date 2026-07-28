@@ -18,16 +18,30 @@ model User {
 }
 
 model Order {
-  id           String   @id @default(uuid())
+  id           String           @id @default(uuid())
   clientName   String
   clientPhone  String
   budgetMax    Float
   requirements String
-  status       String   @default("NEW")
+  status       String           @default("NEW")
   carModel     String?
   carYear      Int?
   carMileage   Int?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime         @default(now())
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  user         User             @relation(fields: [userId], references: [id])
+  inspections  CarInspection[]
+}
+
+model CarInspection {
+  id        String   @id @default(uuid())
+  carModel  String
+  year      Int
+  price     Float
+  link      String?
+  report    String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }

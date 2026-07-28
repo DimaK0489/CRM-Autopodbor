@@ -7,12 +7,13 @@ const router = Router();
 // Все маршруты заказов требуют авторизации
 router.use(authMiddleware);
 
-// GET /api/orders — получить свои заявки
+// GET /api/orders — получить свои заявки (с осмотрами)
 router.get("/", async (req: AuthRequest, res: Response) => {
   try {
     const orders = await prisma.order.findMany({
       where: { userId: req.user!.id },
       orderBy: { createdAt: "desc" },
+      include: { inspections: true },
     });
     res.json(orders);
   } catch (error) {
@@ -134,6 +135,79 @@ router.delete("/:id", async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("Error deleting order:", error);
     res.status(500).json({ error: "Failed to delete order" });
+  }
+});
+
+// ---- Осмотры (inspections) ----
+
+// POST /api/orders/:orderId/inspections — добавить осмотр
+router.post(
+  "/:orderId/inspections",
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const orderId = req.params.orderId as string;
+
+      const existing = await prisma.order.findFirst({
+        where: { id: orderId, userId: req.user!.id },
+      });
+
+      if (!existing) {
+        res.status(404).json({ error: "Order not found" });
+        return;
+      }
+
+      const { carModel, year, price, link, report, status } = req.body;
+
+      if (!carModel || !year || !price || !report) {
+        res
+          .status(400)
+          .json({ error: "carModel, year, price and report are required" });
+        return;
+      }
+
+      const inspection = await prisma.carInspection.create({
+        data: {
+          carModel,
+          year: Number(year),
+          price: Number(price),
+          link: link ?? null,
+          report,
+          status: status ?? "PENDING",
+          orderId,
+        },
+      });
+
+      res.status(201).json(inspection);
+    } catch (error) {
+      console.error("Error creating inspection:", error);
+      res.status(500).json({ error: "Failed to create inspection" });
+    }
+  },
+);
+
+// GET /api/orders/:orderId/inspections — получить все осмотры заявки
+router.get("/:orderId/inspections", async (req: AuthRequest, res: Response) => {
+  try {
+    const orderId = req.params.orderId as string;
+
+    const existing = await prisma.order.findFirst({
+      where: { id: orderId, userId: req.user!.id },
+    });
+
+    if (!existing) {
+      res.status(404).json({ error: "Order not found" });
+      return;
+    }
+
+    const inspections = await prisma.carInspection.findMany({
+      where: { orderId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json(inspections);
+  } catch (error) {
+    console.error("Error fetching inspections:", error);
+    res.status(500).json({ error: "Failed to fetch inspections" });
   }
 });
 

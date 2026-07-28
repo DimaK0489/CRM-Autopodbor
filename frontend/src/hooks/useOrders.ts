@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "../services/api";
-import type { Order, OrderStatus } from "../types/types";
+import type { Order, OrderStatus, CarInspection } from "../types/types";
 
 const ORDERS_KEY = ["orders"] as const;
 
@@ -108,6 +108,34 @@ export function useDeleteOrder() {
     },
     onError: () => {
       toast.error("Ошибка при удалении заявки");
+    },
+  });
+}
+
+export function useCreateInspection() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      data,
+    }: {
+      orderId: string;
+      data: {
+        carModel: string;
+        year: number;
+        price: number;
+        link?: string;
+        report: string;
+        status: string;
+      };
+    }) => api.post<CarInspection>(`/orders/${orderId}/inspections`, data),
+    onSuccess: () => {
+      toast.success("Осмотр добавлен");
+      queryClient.invalidateQueries({ queryKey: ORDERS_KEY });
+    },
+    onError: () => {
+      toast.error("Ошибка при добавлении осмотра");
     },
   });
 }
