@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { User, Plus, Search } from "lucide-react";
+import { User, Plus, Search, Archive, X } from "lucide-react";
 import type { OrderStatus } from "../types/types";
-import { useOrders, useUpdateOrderStatus } from "../hooks/useOrders";
+import {
+  useOrders,
+  useUpdateOrderStatus,
+  useArchivedOrders,
+} from "../hooks/useOrders";
 import {
   COLUMNS,
   columnColors,
@@ -21,6 +25,9 @@ export default function KanbanBoard() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [maxBudgetFilter, setMaxBudgetFilter] = useState<number | "">("");
+  const [showArchive, setShowArchive] = useState(false);
+  const { data: archivedOrders = [], isLoading: isArchivedLoading } =
+    useArchivedOrders();
 
   function onDragEnd(result: DropResult) {
     const { source, destination, draggableId } = result;
@@ -106,6 +113,14 @@ export default function KanbanBoard() {
             min={0}
             className="w-full sm:w-56 pl-3 pr-3 py-2 text-sm rounded-lg border border-gray-300 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition"
           />
+          <button
+            type="button"
+            onClick={() => setShowArchive(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:border-amber-300 transition-colors shrink-0"
+          >
+            <Archive size={16} />
+            <span className="hidden sm:inline">Архив</span>
+          </button>
           {(searchQuery || maxBudgetFilter !== "") && (
             <button
               type="button"
@@ -215,6 +230,124 @@ export default function KanbanBoard() {
           onClose={() => setSelectedOrder(null)}
           onUpdate={setSelectedOrder}
         />
+      )}
+
+      {/* Archive modal */}
+      {showArchive && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowArchive(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden animate-fade-in flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Archive size={20} className="text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Архив заявок
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    {archivedOrders.length} заявок в архиве
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowArchive(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto flex-1 p-6">
+              {isArchivedLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full" />
+                </div>
+              ) : archivedOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <Archive size={48} className="mb-3 opacity-30" />
+                  <p className="text-sm font-medium">
+                    В архиве пока нет заявок
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left py-3 px-2 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+                          Клиент
+                        </th>
+                        <th className="text-left py-3 px-2 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+                          Телефон
+                        </th>
+                        <th className="text-left py-3 px-2 font-semibold text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">
+                          Авто
+                        </th>
+                        <th className="text-right py-3 px-2 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+                          Бюджет
+                        </th>
+                        <th className="text-center py-3 px-2 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+                          Статус
+                        </th>
+                        <th className="text-right py-3 px-2 font-semibold text-gray-500 text-xs uppercase tracking-wider hidden sm:table-cell">
+                          Дата
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {archivedOrders.map((archivedOrder) => (
+                        <tr
+                          key={archivedOrder.id}
+                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => {
+                            setSelectedOrder(archivedOrder);
+                            setShowArchive(false);
+                          }}
+                        >
+                          <td className="py-3 px-2 font-medium text-gray-900">
+                            {archivedOrder.clientName}
+                          </td>
+                          <td className="py-3 px-2 text-gray-600">
+                            {archivedOrder.clientPhone}
+                          </td>
+                          <td className="py-3 px-2 text-gray-600 hidden sm:table-cell">
+                            {archivedOrder.carModel || "—"}
+                          </td>
+                          <td className="py-3 px-2 text-right font-medium text-gray-900">
+                            {new Intl.NumberFormat("ru-RU", {
+                              style: "currency",
+                              currency: "USD",
+                              maximumFractionDigits: 0,
+                            }).format(archivedOrder.budgetMax)}
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <span className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-600">
+                              {archivedOrder.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2 text-right text-gray-500 text-xs hidden sm:table-cell">
+                            {new Date(
+                              archivedOrder.createdAt,
+                            ).toLocaleDateString("ru-RU")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

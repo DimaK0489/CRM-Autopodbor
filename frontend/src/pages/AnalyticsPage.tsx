@@ -45,7 +45,7 @@ function formatCurrency(value: number): string {
 }
 
 export default function AnalyticsPage() {
-  const { data: orders, isLoading, isError } = useOrders();
+  const { data: orders, isLoading, isError } = useOrders(true);
 
   const {
     totalRevenue,

@@ -4,11 +4,24 @@ import { api } from "../services/api";
 import type { Order, OrderStatus, CarInspection } from "../types/types";
 
 const ORDERS_KEY = ["orders"] as const;
+const ARCHIVED_ORDERS_KEY = ["orders", "archived"] as const;
 
-export function useOrders() {
+export function useOrders(includeArchived = false) {
   return useQuery({
-    queryKey: ORDERS_KEY,
-    queryFn: () => api.get<Order[]>("/orders"),
+    queryKey: includeArchived ? [...ORDERS_KEY, "all"] : ORDERS_KEY,
+    queryFn: () => {
+      const endpoint = includeArchived
+        ? "/orders?includeArchived=true"
+        : "/orders";
+      return api.get<Order[]>(endpoint);
+    },
+  });
+}
+
+export function useArchivedOrders() {
+  return useQuery({
+    queryKey: ARCHIVED_ORDERS_KEY,
+    queryFn: () => api.get<Order[]>("/orders/archived"),
   });
 }
 
@@ -108,6 +121,23 @@ export function useDeleteOrder() {
     },
     onError: () => {
       toast.error("Ошибка при удалении заявки");
+    },
+  });
+}
+
+export function useArchiveOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.patch<Order>(`/orders/${id}`, { isArchived: true }),
+    onSuccess: () => {
+      toast.success("Заявка отправлена в архив");
+      queryClient.invalidateQueries({ queryKey: ORDERS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["orders", "archived"] });
+    },
+    onError: () => {
+      toast.error("Ошибка при архивации заявки");
     },
   });
 }

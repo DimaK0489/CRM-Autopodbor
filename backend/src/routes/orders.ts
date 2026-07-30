@@ -7,11 +7,19 @@ const router = Router();
 // Все маршруты заказов требуют авторизации
 router.use(authMiddleware);
 
-// GET /api/orders — получить свои заявки (с осмотрами)
+// GET /api/orders — получить активные заявки (с осмотрами)
+// ?includeArchived=true — вернуть все заявки (включая архивные) для аналитики
 router.get("/", async (req: AuthRequest, res: Response) => {
   try {
+    const includeArchived = req.query.includeArchived === "true";
+
+    const where: Record<string, unknown> = { userId: req.user!.id };
+    if (!includeArchived) {
+      where.isArchived = false;
+    }
+
     const orders = await prisma.order.findMany({
-      where: { userId: req.user!.id },
+      where,
       orderBy: { createdAt: "desc" },
       include: { inspections: true },
     });
@@ -19,6 +27,21 @@ router.get("/", async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
+// GET /api/orders/archived — получить только заархивированные заявки
+router.get("/archived", async (req: AuthRequest, res: Response) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId: req.user!.id, isArchived: true },
+      orderBy: { createdAt: "desc" },
+      include: { inspections: true },
+    });
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching archived orders:", error);
+    res.status(500).json({ error: "Failed to fetch archived orders" });
   }
 });
 
@@ -97,6 +120,8 @@ router.patch("/:id", async (req: AuthRequest, res: Response) => {
     if (carModel !== undefined) data.carModel = carModel;
     if (carYear !== undefined) data.carYear = carYear;
     if (carMileage !== undefined) data.carMileage = carMileage;
+    if (req.body.isArchived !== undefined)
+      data.isArchived = req.body.isArchived;
 
     if (Object.keys(data).length === 0) {
       res.status(400).json({ error: "No fields to update" });

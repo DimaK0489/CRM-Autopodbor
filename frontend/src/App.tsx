@@ -8,7 +8,29 @@ import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import KanbanBoard from "./components/KanbanBoard";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import InspectionReportPage from "./pages/InspectionReportPage";
 import { AuthProvider } from "./context/AuthContext";
+
+function App() {
+  const hasReportParam = new URLSearchParams(window.location.search).has(
+    "reportId",
+  );
+  if (hasReportParam) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <InspectionReportPage />
+      </QueryClientProvider>
+    );
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 function AppContent() {
   const { isAuth, user, logout } = useAuth();
@@ -157,16 +179,6 @@ function AppContent() {
 
       <Toaster position="top-right" richColors closeButton />
     </div>
-  );
-}
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </QueryClientProvider>
   );
 }
 

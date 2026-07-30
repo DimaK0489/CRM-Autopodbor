@@ -16,6 +16,8 @@ import {
   ChevronUp,
   ExternalLink,
   ClipboardCheck,
+  Archive,
+  Printer,
 } from "lucide-react";
 import type {
   Order,
@@ -29,6 +31,7 @@ import {
   useUpdateOrder,
   useDeleteOrder,
   useCreateInspection,
+  useArchiveOrder,
 } from "../hooks/useOrders";
 import {
   COLUMNS,
@@ -83,6 +86,7 @@ export default function OrderDetailsModal({
   const updateStatus = useUpdateOrderStatus();
   const deleteOrder = useDeleteOrder();
   const createInspection = useCreateInspection();
+  const archiveOrder = useArchiveOrder();
 
   // Reset form fields when order changes
   if (!editing) {
@@ -168,7 +172,16 @@ export default function OrderDetailsModal({
     });
   }
 
+  function handleArchive() {
+    archiveOrder.mutate(order.id, {
+      onSuccess: () => {
+        onClose();
+      },
+    });
+  }
+
   const availableStatuses = COLUMNS.filter((c) => c.id !== order.status);
+  const canArchive = order.status === "CLOSED" || order.status === "DEAL";
 
   // Inspection form state
   const [showInspectionForm, setShowInspectionForm] = useState(false);
@@ -667,7 +680,29 @@ export default function OrderDetailsModal({
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const data = {
+                                order,
+                                inspection: ins,
+                              };
+                              sessionStorage.setItem(
+                                "inspectionReportData",
+                                JSON.stringify(data),
+                              );
+                              window.open(
+                                `${window.location.origin}${window.location.pathname}?reportId=${ins.id}`,
+                                "_blank",
+                              );
+                            }}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Экспорт в PDF"
+                          >
+                            <Printer size={14} />
+                          </button>
                           <span
                             className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                               inspectionStatusColor[ins.status]
@@ -775,6 +810,17 @@ export default function OrderDetailsModal({
                   >
                     Закрыть
                   </button>
+                  {canArchive && !order.isArchived && (
+                    <button
+                      type="button"
+                      onClick={handleArchive}
+                      disabled={archiveOrder.isPending}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-amber-600 bg-white border border-amber-200 rounded-xl hover:bg-amber-50 hover:border-amber-300 transition-colors disabled:opacity-60"
+                    >
+                      <Archive size={16} />
+                      {archiveOrder.isPending ? "Архивация..." : "В архив"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleDelete}

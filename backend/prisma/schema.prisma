@@ -31,6 +31,7 @@ model Order {
   userId       String
   user         User             @relation(fields: [userId], references: [id])
   inspections  CarInspection[]
+  isArchived   Boolean          @default(false)
 }
 
 model CarInspection {

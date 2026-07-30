@@ -31,4 +31,5 @@ export interface Order {
   carMileage?: number | null;
   createdAt: string;
   inspections?: CarInspection[];
+  isArchived: boolean;
 }
