@@ -662,59 +662,60 @@ export default function OrderDetailsModal({
                         onClick={() =>
                           setExpandedInspection(isExpanded ? null : ins.id)
                         }
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors text-left"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center shrink-0">
-                            <ClipboardCheck
-                              size={14}
-                              className="text-cyan-600"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">
+                        <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center shrink-0">
+                          <ClipboardCheck size={14} className="text-cyan-600" />
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-gray-900 truncate flex-1">
                               {ins.carModel}
                             </p>
-                            <p className="text-xs text-gray-500">
-                              {ins.year} г. · {formatInspectionPrice(ins.price)}
-                            </p>
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
+                                inspectionStatusColor[ins.status]
+                              }`}
+                            >
+                              {inspectionStatusLabel[ins.status]}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const data = {
+                                  order,
+                                  inspection: ins,
+                                };
+                                sessionStorage.setItem(
+                                  "inspectionReportData",
+                                  JSON.stringify(data),
+                                );
+                                window.open(
+                                  `${window.location.origin}${window.location.pathname}?reportId=${ins.id}`,
+                                  "_blank",
+                                );
+                              }}
+                              className="p-1 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors shrink-0"
+                              title="Экспорт в PDF"
+                            >
+                              <Printer size={14} />
+                            </button>
+                            {isExpanded ? (
+                              <ChevronUp
+                                size={16}
+                                className="text-gray-400 shrink-0"
+                              />
+                            ) : (
+                              <ChevronDown
+                                size={16}
+                                className="text-gray-400 shrink-0"
+                              />
+                            )}
                           </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const data = {
-                                order,
-                                inspection: ins,
-                              };
-                              sessionStorage.setItem(
-                                "inspectionReportData",
-                                JSON.stringify(data),
-                              );
-                              window.open(
-                                `${window.location.origin}${window.location.pathname}?reportId=${ins.id}`,
-                                "_blank",
-                              );
-                            }}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Экспорт в PDF"
-                          >
-                            <Printer size={14} />
-                          </button>
-                          <span
-                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                              inspectionStatusColor[ins.status]
-                            }`}
-                          >
-                            {inspectionStatusLabel[ins.status]}
-                          </span>
-                          {isExpanded ? (
-                            <ChevronUp size={16} className="text-gray-400" />
-                          ) : (
-                            <ChevronDown size={16} className="text-gray-400" />
-                          )}
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {ins.year} г. · {formatInspectionPrice(ins.price)}
+                          </p>
                         </div>
                       </button>
 
