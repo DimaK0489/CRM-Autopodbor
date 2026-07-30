@@ -119,7 +119,7 @@ export default function KanbanBoard() {
             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 hover:border-amber-300 transition-colors shrink-0"
           >
             <Archive size={16} />
-            <span className="hidden sm:inline">Архив</span>
+            <span>Архив</span>
           </button>
           {(searchQuery || maxBudgetFilter !== "") && (
             <button
