@@ -5,7 +5,7 @@ import ordersRouter from "./routes/orders";
 import authRouter from "./routes/auth";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 // CORS — разрешаем запросы с фронтенда
 app.use(
@@ -29,6 +29,6 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
 });
