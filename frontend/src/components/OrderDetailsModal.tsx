@@ -657,12 +657,11 @@ export default function OrderDetailsModal({
                       key={ins.id}
                       className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden"
                     >
-                      <button
-                        type="button"
+                      <div
                         onClick={() =>
                           setExpandedInspection(isExpanded ? null : ins.id)
                         }
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-100 transition-colors cursor-pointer select-none text-left"
                       >
                         <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center shrink-0">
                           <ClipboardCheck size={14} className="text-cyan-600" />
@@ -717,7 +716,7 @@ export default function OrderDetailsModal({
                             {ins.year} г. · {formatInspectionPrice(ins.price)}
                           </p>
                         </div>
-                      </button>
+                      </div>
 
                       {isExpanded && (
                         <div className="px-4 pb-4 pt-0 border-t border-gray-100">
